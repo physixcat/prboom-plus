@@ -138,6 +138,8 @@ int             gametic;
 int             basetic;       /* killough 9/29/98: for demo sync */
 int             totalkills, totallive, totalitems, totalsecret;    // for intermission
 int             show_alive;
+char            *demoname;
+const char      *orig_demoname;
 dboolean         demorecording;
 dboolean         demoplayback;
 dboolean         democontinue = false;
@@ -2413,6 +2415,13 @@ void G_DeferedInitNew(skill_t skill, int episode, int map)
   d_episode = episode;
   d_map = map;
   gameaction = ga_newgame;
+  // if new game is started during demo recording, start new demo
+  if (demorecording) {
+    G_CheckDemoStatus();
+    Z_Free(demoname);
+    G_RecordDemo(orig_demoname);
+    G_BeginRecording();
+  }
 }
 
 /* cph -
@@ -2903,7 +2912,12 @@ void G_WriteDemoTiccmd (ticcmd_t* cmd)
 
 void G_RecordDemo (const char* name)
 {
-  char *demoname;
+  // name originally chosen for demo
+  if (!orig_demoname)
+  {
+    orig_demoname = name;
+  }
+
   usergame = false;
   demoname = malloc(strlen(name)+4+1);
   AddDefaultExtension(strcpy(demoname, name), ".lmp");  // 1/18/98 killough
@@ -3824,14 +3838,24 @@ dboolean G_CheckDemoStatus (void)
 
   if (demorecording)
     {
+      //*demo_p++ = DEMOMARKER;
+      M_WriteFile (demoname, demobuffer, demo_p - demobuffer);
+      Z_Free (demobuffer);
       demorecording = false;
       fputc(DEMOMARKER, demofp);
       
       //e6y
       G_WriteDemoFooter(demofp);
 
-      lprintf(LO_INFO, "G_CheckDemoStatus: Demo recorded\n");
-      return false;  // killough
+      // if new game started during demo recording, start new demo
+      if (gameaction != ga_newgame)
+        {
+          I_Error ("Demo %s recorded",demoname); 
+        }
+      else
+        {
+          lprintf(LO_INFO, "G_CheckDemoStatus: Demo recorded\n");
+        }
     }
 
   if (timingdemo)

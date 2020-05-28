@@ -395,7 +395,21 @@ static void cheat_clev(char buf[3])
   // So be it.
 
   plyr->message = s_STSTR_CLEV; // Ty 03/27/98 - externalized
-
+  // allow IDCLEV during demo playback and warp to requested map
+  if (demoplayback)
+  {
+    if (map > gamemap)
+    {
+      nodrawers = true;
+      singletics = true;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+  else
   G_DeferedInitNew(gameskill, epsd, map);
 }
 

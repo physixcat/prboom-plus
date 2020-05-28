@@ -700,10 +700,8 @@ void M_NewGame(int choice)
     return;
   }
 
-  if (demorecording) {  /* killough 5/26/98: exclude during demo recordings */
-    M_StartMessage("you can't start a new game\n"
-       "while recording a demo!\n\n"PRESSKEY,
-       NULL, false); // killough 5/26/98: not externalized
+  // forbid new game while recording demo
+  if (demorecording) {
     return;
   }
 
